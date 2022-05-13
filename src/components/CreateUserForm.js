@@ -13,7 +13,6 @@ const CreateUserForm = ({setupUser}) => {
                 type="text" />
 
             <div>
-
                 <button
                     className="user-submit-button"
                     onClick={setupUser}>Connect</button>
