@@ -15,6 +15,7 @@ const ChatRoom = () => {
         messageInputValue: "",
         userNameInputValue: "",
         userIdInputValue: "",
+        messageToUpdate: null,
         isSettingUpUser: true,
         isLoading: false,
         error: false
@@ -39,20 +40,42 @@ const ChatRoom = () => {
         updateState({ ...state, isSettingUpUser: false });
     }
 
-    const sendMessage = async () => {
-        const { messages, userIdInputValue, userNameInputValue, messageInputValue } = state;
-
-        const message = {
-                        created_at: 1544421761159, 
-                        user: {
-                            user_id: userIdInputValue, 
-                            nickname: userNameInputValue
-                        },
-                        message: messageInputValue, 
-                        message_id: messages[messages.length-1].message_id+"!"
-        }
-        const updatedMessages = [...messages, message]
+    const handleDeleteMessage = async (messageToDelete) => {
+        const { messages } = state;
+        
+        const updatedMessages = messages.filter((message) => {
+            return message.message_id !== messageToDelete.message_id;
+        });
         updateState({ ...state, messages: updatedMessages });
+    }
+
+    const updateMessage = async (message) => {
+        updateState({ ...state, messageToUpdate: message, messageInputValue: message.message });
+    }
+
+    const sendMessage = async () => {
+        const { messages, userIdInputValue, userNameInputValue, messageInputValue, messageToUpdate } = state;
+
+        if (messageToUpdate) {
+            messageToUpdate.message = messageInputValue;
+
+            const messageIndex = messages.findIndex((item => item.message_id == messageToUpdate.message_id));
+            messages[messageIndex] = messageToUpdate;
+
+            updateState({ ...state, messages, messageInputValue: "", messageToUpdate: null });
+        } else {
+            const message = {
+                            created_at: 1544421761159, 
+                            user: {
+                                user_id: userIdInputValue, 
+                                nickname: userNameInputValue
+                            },
+                            message: messageInputValue, 
+                            message_id: messages[messages.length-1].message_id+"!"
+            }
+            const updatedMessages = [...messages, message]
+            updateState({ ...state, messages: updatedMessages, messageInputValue: "" });
+        }
     }
     
 
@@ -80,6 +103,8 @@ const ChatRoom = () => {
             <Channel channelName={channelName}>
                 <MessagesList
                     messages={state.messages}
+                    handleDeleteMessage={handleDeleteMessage}
+                    updateMessage={updateMessage}
                     userId={state.userIdInputValue} />
                 <MessageInput 
                     value={state.messageInputValue}

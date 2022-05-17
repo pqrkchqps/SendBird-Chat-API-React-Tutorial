@@ -2,7 +2,7 @@
 import { timestampToTime } from '../utils/messageUtils';
 
 
-const Message = ({ message, userId }) => {
+const Message = ({ message, updateMessage, handleDeleteMessage, userId }) => {
     const messageSentByCurrentUser = message.user.user_id === userId;
     return (
         <div className="oc-message">
@@ -12,10 +12,10 @@ const Message = ({ message, userId }) => {
             <div>{message.message}</div>
 
             {messageSentByCurrentUser && <>
-                <button className="control-button">
+                <button className="control-button" onClick={() => updateMessage(message)}>
                     <img className="oc-message-icon" src='/icon_edit.png' />
                 </button>
-                <button className="control-button">
+                <button className="control-button" onClick={() => handleDeleteMessage(message)}>
                     <img className="oc-message-icon" src='/icon_delete.png' />
                 </button>
             </>}
