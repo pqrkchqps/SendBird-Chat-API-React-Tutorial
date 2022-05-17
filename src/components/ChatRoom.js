@@ -13,10 +13,22 @@ const ChatRoom = () => {
                     {created_at: 1544532800000, user: {user_id: "id2", nickname:"george"}, message: "hi", message_id: "id2"},
                     {created_at: 1546421780000, user: {user_id: "id1", nickname:"joey"}, message: "Hey hey hey", message_id: "id3"}],
         messageInputValue: "",
+        userNameInputValue: "",
+        userIdInputValue: "",
         isSettingUpUser: true,
         isLoading: false,
         error: false
     });
+
+    const onUserNameInputChange = (e) => {
+        const userNameInputValue = e.currentTarget.value;
+        updateState({ ...state, userNameInputValue });
+    }
+
+    const onUserIdInputChange = (e) => {
+        const userIdInputValue = e.currentTarget.value;
+        updateState({ ...state, userIdInputValue });
+    }
 
     const onMessageInputChange = (e) => {
         const messageInputValue = e.currentTarget.value;
@@ -28,13 +40,13 @@ const ChatRoom = () => {
     }
 
     const sendMessage = async () => {
-        const { messages, messageInputValue } = state;
+        const { messages, userIdInputValue, userNameInputValue, messageInputValue } = state;
 
         const message = {
                         created_at: 1544421761159, 
                         user: {
-                            user_id: "test", 
-                            nickname: "tester"
+                            user_id: userIdInputValue, 
+                            nickname: userNameInputValue
                         },
                         message: messageInputValue, 
                         message_id: messages[messages.length-1].message_id+"!"
@@ -57,11 +69,18 @@ const ChatRoom = () => {
     
     return (
         <>
-            {state.isSettingUpUser && <CreateUserForm setupUser={setupUser} />}
+            {state.isSettingUpUser && 
+                <CreateUserForm 
+                    setupUser={setupUser}
+                    userNameInputValue={state.userNameInputValue}
+                    userIdInputValue={state.userIdInputValue}
+                    onUserIdInputChange={onUserIdInputChange}
+                    onUserNameInputChange={onUserNameInputChange} />
+            }
             <Channel channelName={channelName}>
                 <MessagesList
                     messages={state.messages}
-                    userId={"id1"} />
+                    userId={state.userIdInputValue} />
                 <MessageInput 
                     value={state.messageInputValue}
                     onChange={onMessageInputChange}
