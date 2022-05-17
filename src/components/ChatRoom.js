@@ -21,6 +21,7 @@ const channelName = "Test Channel"
 const ChatRoom = () => {
 
     const [state, updateState] = useState({
+        joinedChannel: null,
         messages: [ {created_at: 1544421761159, user: {user_id: "id1", nickname:"joey"}, message: "Hey hey", message_id: "id1"},
                     {created_at: 1544532800000, user: {user_id: "id2", nickname:"george"}, message: "hi", message_id: "id2"},
                     {created_at: 1546421780000, user: {user_id: "id1", nickname:"joey"}, message: "Hey hey hey", message_id: "id3"}],
@@ -62,8 +63,53 @@ const ChatRoom = () => {
             const userBody = {user_id: userIdInputValue, nickname: userNameInputValue}
             await axios.put(sendBirdURL+"users/"+userIdInputValue, userBody, sendBirdConfig)
         }
-        
-        updateState({ ...state, isSettingUpUser: false });
+
+        updateState({ ...state, isLoading: true });
+        let [joinedChannel, messages, error] = await joinTestChannel();
+        if (error) {
+            return onError(error);
+        }
+        updateState({ ...state, joinedChannel, messages, isLoading: false, isSettingUpUser: false });
+    }
+
+    const joinTestChannel = async () => {
+        try {
+            const channelResponse = await axios.get(sendBirdURL+"open_channels", sendBirdConfig);
+            const channels = channelResponse.data.channels;
+            let testChannel = channels.find(channel => channel.name === channelName)
+            if (!testChannel) {
+                const [openChannel, error] = await createChannel(channelName);
+                if (error){
+                    return [null, null, error]
+                }
+                testChannel = openChannel;
+            }
+
+            const messageslUrl = sendBirdURL+"open_channels/"+testChannel.channel_url+"/messages";
+            const messagesConfig = sendBirdConfig;
+            messagesConfig.params = {message_ts: 0}
+
+            const messagesResponse = await axios.get(messageslUrl, messagesConfig);
+            const messages = messagesResponse.data.messages;
+            return [testChannel, messages, null];
+    
+        } catch (error) {
+            return [null, null, error];
+        }
+    
+    }
+
+    const createChannel = async () => {
+        try {
+            const createChannelUrl = sendBirdURL+"open_channels";
+            const createChannelBody = {name: channelName};
+            const openChannelResponse = await axios.post(createChannelUrl, createChannelBody, sendBirdConfig)
+            const openChannel = openChannelResponse.data;
+            return [openChannel, null];
+        } catch (error) {
+            return [null, error];
+        }
+    
     }
 
     const handleDeleteMessage = async (messageToDelete) => {
@@ -97,11 +143,16 @@ const ChatRoom = () => {
                                 nickname: userNameInputValue
                             },
                             message: messageInputValue, 
-                            message_id: messages[messages.length-1].message_id+"!"
+                            message_id: !messages.length ? "id" : messages[messages.length-1].message_id+"!"
             }
             const updatedMessages = [...messages, message]
             updateState({ ...state, messages: updatedMessages, messageInputValue: "" });
         }
+    }
+
+    const onError = (error) => {
+        updateState({ ...state, error: error.message });
+        console.log(error);
     }
     
 
