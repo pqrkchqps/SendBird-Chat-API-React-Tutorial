@@ -22,9 +22,7 @@ const ChatRoom = () => {
 
     const [state, updateState] = useState({
         joinedChannel: null,
-        messages: [ {created_at: 1544421761159, user: {user_id: "id1", nickname:"joey"}, message: "Hey hey", message_id: "id1"},
-                    {created_at: 1544532800000, user: {user_id: "id2", nickname:"george"}, message: "hi", message_id: "id2"},
-                    {created_at: 1546421780000, user: {user_id: "id1", nickname:"joey"}, message: "Hey hey hey", message_id: "id3"}],
+        messages: [],
         messageInputValue: "",
         userNameInputValue: "",
         userIdInputValue: "",
@@ -126,25 +124,31 @@ const ChatRoom = () => {
     }
 
     const sendMessage = async () => {
-        const { messages, userIdInputValue, userNameInputValue, messageInputValue, messageToUpdate } = state;
+        const { messages, userIdInputValue, messageInputValue, messageToUpdate } = state;
 
         if (messageToUpdate) {
-            messageToUpdate.message = messageInputValue;
+            const updateMessageUrl = sendBirdURL+"open_channels/"+state.joinedChannel.channel_url
+                                    +"/messages/"+messageToUpdate.message_id;
+
+            const updateMessageBody = {message_type: "MESG", message: messageInputValue}
+
+            const updatedMessageResponse = await axios.put(updateMessageUrl,updateMessageBody,sendBirdConfig)
+            const updatedMessage = updatedMessageResponse.data;
 
             const messageIndex = messages.findIndex((item => item.message_id == messageToUpdate.message_id));
-            messages[messageIndex] = messageToUpdate;
+            messages[messageIndex] = updatedMessage;
 
             updateState({ ...state, messages, messageInputValue: "", messageToUpdate: null });
         } else {
-            const message = {
-                            created_at: 1544421761159, 
-                            user: {
-                                user_id: userIdInputValue, 
-                                nickname: userNameInputValue
-                            },
-                            message: messageInputValue, 
-                            message_id: !messages.length ? "id" : messages[messages.length-1].message_id+"!"
-            }
+            const sendMessageUrl = sendBirdURL+"open_channels/"
+                                    +state.joinedChannel.channel_url+"/messages";
+
+            const sendMessageBody = {message_type: "MESG", 
+                                    user_id: userIdInputValue, message: messageInputValue}
+
+            const messageResponse = await axios.post(sendMessageUrl, sendMessageBody, sendBirdConfig)
+            const message = messageResponse.data;
+            
             const updatedMessages = [...messages, message]
             updateState({ ...state, messages: updatedMessages, messageInputValue: "" });
         }
