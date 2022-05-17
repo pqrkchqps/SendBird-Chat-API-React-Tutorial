@@ -111,7 +111,10 @@ const ChatRoom = () => {
     }
 
     const handleDeleteMessage = async (messageToDelete) => {
-        const { messages } = state;
+        const { joinedChannel, messages } = state;
+        const deleteMessageUrl = sendBirdURL+"open_channels/"+joinedChannel.channel_url
+                                    +"/messages/"+messageToDelete.message_id;
+        await axios.delete(deleteMessageUrl, sendBirdConfig);
         
         const updatedMessages = messages.filter((message) => {
             return message.message_id !== messageToDelete.message_id;
