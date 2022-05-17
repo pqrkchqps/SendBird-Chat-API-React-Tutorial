@@ -5,6 +5,18 @@ import Channel from './Channel'
 import MessagesList from "./MessagesList"
 import MessageInput from "./MessageInput"
 
+import axios from 'axios'
+
+import { SENDBIRD_INFO } from '../constants/constants';
+
+const sendBirdConfig = {
+    headers: {
+        'Content-Type': "application/json; charset=utf8",
+        'Api-Token': SENDBIRD_INFO.masterToken
+    }
+}
+const sendBirdURL = `https://api-${SENDBIRD_INFO.appId}.sendbird.com/v3/`
+
 const channelName = "Test Channel"
 const ChatRoom = () => {
 
@@ -37,6 +49,20 @@ const ChatRoom = () => {
     }
     
     const setupUser = async () => {
+        const { userNameInputValue, userIdInputValue } = state;
+
+        const usersResponse = await axios.get(sendBirdURL+"users", sendBirdConfig)
+        const users = usersResponse.data.users;
+        const usersThatMatch = users.filter(user => user.user_id === userIdInputValue)
+        
+        if (usersThatMatch.length === 0) {
+            const userBody = {user_id: userIdInputValue, nickname: userNameInputValue, profile_url: ""}
+            await axios.post(sendBirdURL+"users", userBody, sendBirdConfig)
+        } else {
+            const userBody = {user_id: userIdInputValue, nickname: userNameInputValue}
+            await axios.put(sendBirdURL+"users/"+userIdInputValue, userBody, sendBirdConfig)
+        }
+        
         updateState({ ...state, isSettingUpUser: false });
     }
 
